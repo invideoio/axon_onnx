@@ -44,7 +44,7 @@ defmodule AxonOnnx.Deserialize do
     {Enum.map(outputs, fn name -> nodes[name] end), params}
   end
 
-  defp get_inputs(%Graph{input: inputs}, params, dimensions) do
+  def get_inputs(%Graph{input: inputs}, params, dimensions) do
     Enum.reduce(inputs, %{}, fn %Value{name: name, type: %Type{value: value}}, acc ->
       if Map.has_key?(params, name) do
         acc
@@ -61,17 +61,17 @@ defmodule AxonOnnx.Deserialize do
     end)
   end
 
-  defp get_params(%Graph{initializer: initializer}) do
+  def get_params(%Graph{initializer: initializer}) do
     Enum.reduce(initializer, %{}, fn %Tensor{name: name} = tensor, params ->
       Map.put(params, name, tensor!(tensor))
     end)
   end
 
-  defp get_outputs(%Graph{output: outputs}) do
+  def get_outputs(%Graph{output: outputs}) do
     Enum.map(outputs, fn %Value{name: name} -> name end)
   end
 
-  defp get_nodes(pruned_nodes, inp, params, used_params) do
+  def get_nodes(pruned_nodes, inp, params, used_params) do
     Enum.reduce(pruned_nodes, {inp, params, used_params}, &recur_nodes/2)
   end
 
@@ -105,7 +105,7 @@ defmodule AxonOnnx.Deserialize do
   ]
 
   for {op, fun} <- @nx_op_types do
-    defp recur_nodes(
+    def recur_nodes(
            %Node{op_type: unquote(op), input: [input_name], output: [output_name]},
            {axon, params, used_params}
          ) do
@@ -149,7 +149,7 @@ defmodule AxonOnnx.Deserialize do
   ]
 
   for {op, act, act_opts} <- @activation_op_types do
-    defp recur_nodes(
+    def recur_nodes(
            %Node{
              op_type: unquote(op),
              attribute: attrs,
@@ -205,7 +205,7 @@ defmodule AxonOnnx.Deserialize do
   ]
 
   for {op, reduce_fun, axis_or_axes, op_name} <- @reduction_op_types do
-    defp recur_nodes(
+    def recur_nodes(
            %Node{
              op_type: unquote(op),
              attribute: attrs,
@@ -272,7 +272,7 @@ defmodule AxonOnnx.Deserialize do
   ]
 
   for {op, binary_op} <- @builtin_binary_op_types do
-    defp recur_nodes(
+    def recur_nodes(
            %Node{op_type: unquote(op), input: [inp1, inp2], output: [output_name]},
            {axon, params, used_params}
          ) do
@@ -366,7 +366,7 @@ defmodule AxonOnnx.Deserialize do
   ]
 
   for {op, binary_fun, op_name} <- @binary_op_types do
-    defp recur_nodes(
+    def recur_nodes(
            %Node{op_type: unquote(op), input: [inp1, inp2], output: [output_name]},
            {axon, params, used_params}
          ) do
@@ -431,7 +431,7 @@ defmodule AxonOnnx.Deserialize do
     end
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{
            op_type: "BitShift",
            attribute: attrs,
@@ -514,7 +514,7 @@ defmodule AxonOnnx.Deserialize do
   ]
 
   for {op, global_pool_op} <- @global_pool_types do
-    defp recur_nodes(
+    def recur_nodes(
            %Node{op_type: unquote(op), attribute: attrs, input: [input], output: [output_name]},
            {axon, params, used_params}
          ) do
@@ -541,7 +541,7 @@ defmodule AxonOnnx.Deserialize do
     {"Sum", &Nx.add/2, :add}
   ]
   for {op, variadic_op, op_name} <- @variadic_op_types do
-    defp recur_nodes(
+    def recur_nodes(
            %Node{op_type: unquote(op), input: inputs, output: [output_name]},
            {axon, params, used_params}
          ) do
@@ -567,7 +567,7 @@ defmodule AxonOnnx.Deserialize do
     end
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Cast", attribute: attrs, input: [input], output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -589,7 +589,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "LRN", input: [input], attribute: attrs, output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -602,7 +602,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Gather", input: [x, ind], output: [output_name], attribute: attrs},
          {axon, params, used_params}
        ) do
@@ -643,7 +643,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, updated_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "MatMul", input: [a, b], output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -680,7 +680,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, updated_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Gemm", input: [a, b | maybe_c], attribute: attrs, output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -786,7 +786,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, updated_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "MaxPool", input: [inp], attribute: attrs, output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -850,7 +850,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "AveragePool", input: [inp], attribute: attrs, output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -911,7 +911,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Conv", attribute: attrs, input: input, output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1023,7 +1023,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, updated_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{
            op_type: "BatchNormalization",
            input: [inp, gamma, beta, mean, var],
@@ -1072,7 +1072,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, updated_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{
            op_type: "InstanceNormalization",
            attribute: attrs,
@@ -1117,7 +1117,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, updated_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Concat", attribute: attrs, input: inputs, output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1136,7 +1136,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Split", attribute: attrs, input: [inp], output: output_names},
          {axon, params, used_params}
        ) do
@@ -1156,7 +1156,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Constant", attribute: attrs, output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1202,7 +1202,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{
            op_type: "ConstantOfShape",
            attribute: attrs,
@@ -1230,7 +1230,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Reshape", input: [inp, shape], attribute: attrs, output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1282,7 +1282,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Expand", input: [inp, shape], output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1322,7 +1322,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Range", input: [start, limit, delta], output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1341,7 +1341,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Flatten", input: [inp], output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1350,7 +1350,7 @@ defmodule AxonOnnx.Deserialize do
     {Map.put(axon, output_name, Axon.flatten(inp, name: output_name)), params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Slice", input: [inp, starts, ends], output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1364,7 +1364,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, updated_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Slice", input: [inp, starts, ends, axes], output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1381,7 +1381,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, updated_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Slice", input: [inp, starts, ends, axes, steps], output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1398,7 +1398,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, updated_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Shape", input: [inp], attribute: attrs, output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1456,7 +1456,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Transpose", input: [input], attribute: attrs, output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1493,7 +1493,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, updated_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{
            op_type: "Unsqueeze",
            input: [input | maybe_axis],
@@ -1537,7 +1537,7 @@ defmodule AxonOnnx.Deserialize do
     end
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "If", input: [input], attribute: attrs, output: outputs},
          {axon, params, used_params}
        ) do
@@ -1566,7 +1566,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, updated_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Where", input: [c_name, x_name, y_name], output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1628,7 +1628,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, updated_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "CumSum", input: [x, axis], output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1657,7 +1657,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Clip", attribute: attrs, input: [inp_name], output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1690,7 +1690,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Clip", input: [inp_name, min_name], output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1722,7 +1722,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Clip", input: [inp_name, "", max_name], output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1754,7 +1754,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Clip", input: [inp_name, min_name, max_name], output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1788,7 +1788,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Squeeze", attribute: attrs, input: [data], output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1817,7 +1817,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Squeeze", input: [data, axes], output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1828,14 +1828,21 @@ defmodule AxonOnnx.Deserialize do
       Nx.squeeze(x, axes: axes)
     end
 
+    IO.inspect(inp, label: "Squeeze input")
+    IO.inspect(data, label: "Squeeze data")
+    IO.inspect(params, label: "Squeeze params")
+    IO.inspect(used_params, label: "Squeeze used_params")
+
+    copy(inp.nodes)
+
     updated_axon =
-      case inp do
+      case get_axon_node(inp) do
         %Axon.Node{op: :constant, opts: [value: v]} ->
           new_value = Nx.squeeze(v, axes: axes)
           layer = Axon.constant(new_value, name: output_name)
           Map.put(axon, output_name, layer)
 
-        %Axon.Node{} = inp ->
+        %Axon.Node{} ->
           layer = Axon.layer(fun, [inp], name: output_name, op_name: :squeeze)
           Map.put(axon, output_name, layer)
       end
@@ -1843,7 +1850,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "Split", input: [input, split], attribute: attrs, output: outputs},
          {axon, params, used_params}
        ) do
@@ -1865,7 +1872,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "EyeLike", input: [input], attribute: attrs, output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1894,7 +1901,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "RandomUniform", attribute: attrs, output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1917,7 +1924,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{
            op_type: "RandomUniformLike",
            input: [input],
@@ -1973,7 +1980,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "RandomNormal", attribute: attrs, output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -1996,7 +2003,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{
            op_type: "RandomNormalLike",
            input: [input],
@@ -2052,7 +2059,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{
            op_type: "Dropout",
            input: [inp_name],
@@ -2099,7 +2106,149 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
+       %Node{op_type: "Tile", input: [input_name, repeats_name], output: [output_name]},
+       {axon, params, used_params}
+     ) do
+    input = input!(input_name, axon, params, used_params)
+    repeats = constant!(repeats_name, axon, params, used_params)
+
+    fun = fn inp, opts ->
+      # Assuming repeats are constant and can be directly read
+      repeat_values = opts[:repeats] |> Nx.to_flat_list()
+      Nx.tile(inp, repeat_values)
+    end
+
+    opts = [repeats: repeats]
+
+    {updated_axon, updated_params} =
+      case get_axon_node(input) do
+        %Axon.Node{op: :constant, opts: [value: v]} ->
+          # TODO: since this is constant, try if it can be done at conversion time
+          # TODO: conversion ran too slowly in previous attempts
+          # new_value = fun.(v, opts)
+          # {Map.put(axon, output_name, Axon.constant(new_value, name: output_name)), used_params}
+
+          layer = Axon.layer(fun, [input], opts ++ [name: output_name, op_name: :tile])
+          {Map.put(axon, output_name, layer), used_params}
+
+        %Axon.Node{} ->
+          layer = Axon.layer(fun, [input], opts ++ [name: output_name, op_name: :tile])
+          {Map.put(axon, output_name, layer), used_params}
+
+        %Nx.Tensor{} = tensor_input ->
+          new_value = fun.(tensor_input, opts)
+          {Map.put(axon, output_name, Axon.constant(new_value, name: output_name)), used_params}
+      end
+
+    {updated_axon, params, updated_params}
+  end
+
+  def recur_nodes(
+         %Node{op_type: "GridSample", input: [input_name, grid_name], attribute: attrs, output: [output_name]},
+         {axon, params, used_params}
+       ) do
+    input = input!(input_name, axon, params, used_params)
+    grid = input!(grid_name, axon, params, used_params)
+
+    # Extract options from attributes
+    align_corners = attrs |> get_option("align_corners", false)
+    padding_mode = attrs |> get_option("padding_mode", :zeros) # default padding mode :zeros
+
+    # Build the Axon layer using our defined grid_sample function
+    # output = AxonOnnx.GridSample.grid_sample(input, grid, align_corners: align_corners, padding_mode: padding_mode)
+
+    # updated_axon = Map.put(axon, output_name, output)
+    # {updated_axon, params, used_params}
+
+    layer = Axon.layer(&AxonOnnx.GridSample.grid_sample/3, [input, grid], name: output_name, op_name: :grid_sample, align_corners: align_corners, padding_mode: padding_mode)
+    updated_axon = Map.put(axon, output_name, layer)
+
+    {updated_axon, params, used_params}
+  end
+
+  defp get_option(attrs, option_name, default) do
+    Enum.find_value(attrs, default, fn
+      %Attribute{name: ^option_name, type: :INT, i: value} -> value
+      %Attribute{name: ^option_name, type: :STRING, s: value} when option_name == "padding_mode" ->
+        String.to_existing_atom(value)
+      _ -> nil
+    end)
+  end
+
+  def recur_nodes(
+       %Node{
+         op_type: "Resize",
+         attribute: attrs,
+         input: [input, _, scales_input],
+         output: [output_name]
+       },
+       {axon, params, used_params}
+     ) do
+    options = options!(attrs)
+
+    mode = options["mode"] || "nearest"  # Default to nearest if not specified
+    coordinate_transformation_mode = options["coordinate_transformation_mode"] || "asymmetric"
+    nearest_mode = options["nearest_mode"] || "round_prefer_floor"  # Default nearest mode
+
+    input_tensor = input!(input, axon, params, used_params)
+    scales_tensor = input!(scales_input, axon, params, used_params)
+
+    resized_tensor =
+      case mode do
+        "nearest" ->
+          # resize_nearest(input_tensor, scales_tensor, coordinate_transformation_mode, nearest_mode)
+          layer = Axon.layer(&resize_nearest/3, [input_tensor, scales_tensor], name: output_name, op_name: :resize_nearest, coordinate_transformation_mode: coordinate_transformation_mode, nearest_mode: nearest_mode)
+          updated_axon = Map.put(axon, output_name, layer)
+
+          {updated_axon, params, used_params}
+
+        _ ->
+          raise ArgumentError, "Unsupported resize mode: #{mode}"
+      end
+
+    # updated_axon = Map.put(axon, output_name, Axon.constant(resized_tensor, name: output_name))
+    # {updated_axon, params, used_params}
+  end
+
+  defp resize_nearest(tensor, scales, opts \\ []) do
+    coordinate_transformation_mode = Keyword.get(opts, :coordinate_transformation_mode, "asymmetric")
+    nearest_mode = Keyword.get(opts, :nearest_mode, "round_prefer_floor")
+    input_shape = Nx.shape(tensor)
+
+    # The `scales` should be a tensor or list that contains the scaling factors for each dimension
+    # Ensure `scales` are in the correct format, either from a tensor directly or preprocessing
+    scale_factors =
+      if is_list(scales) do
+        scales
+      else
+        Nx.to_flat_list(scales)
+      end
+
+    output_shape = Enum.zip_with(input_shape, scale_factors, fn dim, scale ->
+      :erlang.round(dim * scale)
+    end)
+
+    # Calculate scaled indices based on scale factors and resizing logic
+    indices = for dim <- Tuple.to_list(input_shape), reduce: [[]] do
+      acc -> for idx <- 0..(dim - 1), acc <- acc, do: [idx | acc]
+    end |> Enum.map(&Enum.reverse/1)
+
+    scaled_indices = Enum.map(indices, fn index ->
+      Enum.zip_with(index, scale_factors, fn idx, scale ->
+        case nearest_mode do
+          "round_prefer_ceil" -> :erlang.ceil(idx * scale)
+          _ -> :erlang.floor(idx * scale)  # Default behavior
+        end
+      end)
+    end)
+
+    values = Enum.map(scaled_indices, &Nx.take(tensor, &1))
+    Nx.reshape(Nx.stack(values), output_shape)
+  end
+
+
+  def recur_nodes(
          %Node{op_type: "Pad", input: [inp_name], attribute: attrs, output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -2128,7 +2277,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{
            op_type: "Pad",
            input: [inp_name, pad_name | maybe_constant],
@@ -2173,7 +2322,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(
+  def recur_nodes(
          %Node{op_type: "NonZero", input: [inp_name], output: [output_name]},
          {axon, params, used_params}
        ) do
@@ -2209,7 +2358,7 @@ defmodule AxonOnnx.Deserialize do
     {updated_axon, params, used_params}
   end
 
-  defp recur_nodes(%Node{op_type: unsupported}, _) do
+  def recur_nodes(%Node{op_type: unsupported}, _) do
     raise ArgumentError, "unsupported #{inspect(unsupported)}"
   end
 
@@ -2328,7 +2477,7 @@ defmodule AxonOnnx.Deserialize do
     end
   end
 
-  defp input!(name, axon, params, used_params) do
+  def input!(name, axon, params, used_params) do
     cond do
       Map.has_key?(axon, name) ->
         axon[name]
@@ -2344,7 +2493,7 @@ defmodule AxonOnnx.Deserialize do
     end
   end
 
-  defp constant!(name, axon, params, used_params) do
+  def constant!(name, axon, params, used_params) do
     cond do
       Map.has_key?(axon, name) ->
         case get_axon_node(axon[name]) do
@@ -2464,12 +2613,27 @@ defmodule AxonOnnx.Deserialize do
             Logger.warning("#{key} has no specified dimension, assuming nil")
           end
 
-          param
+          param || 1
 
         _ ->
           raise ArgumentError, "unsupported dimension type"
       end
     end)
     |> List.to_tuple()
+  end
+
+  def copy(term) do
+    text =
+      if is_binary(term) do
+        term
+      else
+        inspect(term, limit: :infinity, pretty: true)
+      end
+
+    port = Port.open({:spawn, "pbcopy"}, [])
+    true = Port.command(port, text)
+    true = Port.close(port)
+
+    :ok
   end
 end
